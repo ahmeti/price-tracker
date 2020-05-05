@@ -1,0 +1,39 @@
+{
+  "name": "Fiyat Takipçi",
+  "version": "2.1",
+  "description": "Amazon Türkiye üzerinde ürün fiyatlarını kontrol edip takibini yapmaktadır. ",
+  "permissions": [
+    "notifications", "storage", "activeTab"
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.amazon.com.tr/*"],
+      "css": ["core.css"],
+      "js" : ["amazon.js"]
+    }
+  ],
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/16.png",
+      "32": "images/32.png",
+      "48": "images/48.png",
+      "128": "images/128.png"
+    }
+  },
+  "icons": {
+    "16": "images/16.png",
+    "32": "images/32.png",
+    "48": "images/48.png",
+    "128": "images/128.png"
+  },
+  "web_accessible_resources": [
+    "core.css",
+    "fonts/*"
+  ],
+  "manifest_version": 2
+}

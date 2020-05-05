@@ -1,0 +1,8 @@
+{
+    "/dist/manifest.json": "/dist/manifest.json",
+    "/dist/popup.html": "/dist/popup.html",
+    "/dist/background.js": "/dist/background.js",
+    "/dist/amazon.js": "/dist/amazon.js",
+    "/dist/popup.js": "/dist/popup.js",
+    "/dist/core.css": "/dist/core.css"
+}
