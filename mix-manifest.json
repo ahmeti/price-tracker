@@ -1,8 +1,9 @@
 {
     "/dist/manifest.json": "/dist/manifest.json",
     "/dist/popup.html": "/dist/popup.html",
+    "/dist/alert.mp3": "/dist/alert.mp3",
     "/dist/background.js": "/dist/background.js",
-    "/dist/amazon.js": "/dist/amazon.js",
+    "/dist/priceTrackerAmazon.js": "/dist/priceTrackerAmazon.js",
     "/dist/popup.js": "/dist/popup.js",
-    "/dist/core.css": "/dist/core.css"
+    "/dist/priceTracker.css": "/dist/priceTracker.css"
 }

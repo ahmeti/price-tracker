@@ -83,7 +83,7 @@ const priceTracker = {
                     <title>Fiyat Takipçi</title>
                     <meta http-equiv="X-UA-Compatible" content="IE=edge">
                     <meta name="viewport" content="width=device-width, initial-scale=1">
-                    <link rel="stylesheet" href="${ chrome.runtime.getURL('core.css') }" type="text/css" />
+                    <link rel="stylesheet" href="${ chrome.runtime.getURL('priceTracker.css') }" type="text/css" />
                 `);
 
                 $('body').html(`
@@ -121,31 +121,24 @@ const priceTracker = {
                             <form onsubmit="return false;">
                               
                                 <div class="row">
-                                
-                                    <div class="col-sm-2">
-                                        <div class="form-group form-group-sm">
-                                            <label>API Anahtarı</label>
-                                            <input type="text" class="form-control pt-api-key" placeholder="API anahtarını yazınız.">
-                                        </div>    
-                                    </div>
                               
-                                    <div class="col-sm-2">
+                                    <div class="col-sm-3">
                                         <div class="form-group form-group-sm">
                                             <label>Kontrol Sıklığı</label>
                                             <select class="form-control input-sm pt-interval">
-                                                <option value="3">3 Dakika</option>                                            
-                                                <option value="4">4 Dakika</option>
-                                                <option value="5">5 Dakika</option>
-                                                <option value="6">6 Dakika</option>
-                                                <option value="7">7 Dakika</option>
-                                                <option value="8">8 Dakika</option>
-                                                <option value="9">9 Dakika</option>
-                                                <option value="10">10 Dakika</option>
+                                                <option value="3">3 Dakikada Bir</option>                                            
+                                                <option value="4">4 Dakikada Bir</option>
+                                                <option value="5">5 Dakikada Bir</option>
+                                                <option value="6">6 Dakikada Bir</option>
+                                                <option value="7">7 Dakikada Bir</option>
+                                                <option value="8">8 Dakikada Bir</option>
+                                                <option value="9">9 Dakikada Bir</option>
+                                                <option value="10">10 Dakikada Bir</option>
                                             </select>
                                         </div>    
                                     </div>
                                     
-                                    <div class="col-sm-2">
+                                    <div class="col-sm-3">
                                         <div class="form-group form-group-sm">
                                             <label>İndirim / Artış Durumu</label>
                                             <select class="form-control input-sm pt-type">
@@ -183,6 +176,8 @@ const priceTracker = {
 
                 setTimeout(function () {
                     priceTracker.setAutoNumeric();
+                    priceTracker.setNoty();
+                    priceTracker.listenHashChange();
                     console.clear();
                     resolve(true);
                 }, 8000);
@@ -192,8 +187,8 @@ const priceTracker = {
         });
     },
 
-    setAutoNumeric: function (){
-
+    setAutoNumeric: function ()
+    {
         selector = $('input[data-autonumeric=1]');
 
         if ( jQuery().autoNumeric && selector.length > 0 ){
@@ -205,76 +200,43 @@ const priceTracker = {
         }
     },
 
+    setNoty: function ()
+    {
+        /*noty.overrideDefaults({
+            layout: 'topRight',
+            theme: 'relax',
+            timeout: '600000',
+            progressBar: true,
+            closeWith: ['button'],
+            maxVisible: 100,
+        });*/
+    },
+
     sendMessage: function (market_id, product_code, product_name, old_price, new_price )
     {
         return new Promise(function(resolve, reject){
 
             priceTracker.getStorageLocal('api_key').then(function (api_key) {
 
-                $.get('https://telegram.ahmetimamoglu.com.tr/send', {
-                    api_token: api_key,
-                    market_id: market_id,
-                    product_code: product_code,
-                    product_name: product_name,
-                    old_price: old_price,
-                    new_price: new_price
-                }, function(data){
+                priceTracker.playSound();
 
-                    try {
-                        if(data.status === true){
-                            resolve(true);
-                        }
-                    }catch (e) {
-                        reject(false);
-                    }
-
+                noty({
+                    text:
+                        `<div>
+                            <div><strong>Fiyat değişti!</strong></div>
+                            <div>Eski: ${old_price} Yeni: ${new_price}</div>
+                            <div><a href="#${product_code}">${product_code}</a></div>
+                        </div>`,
+                    type: "warning",
+                    layout: 'topRight',
+                    theme: 'relax',
+                    timeout: '600000',
+                    progressBar: true,
+                    closeWith: ['button'],
+                    maxVisible: 100,
                 });
 
-            });
-
-        });
-    },
-
-    checkApiKey: function()
-    {
-        return new Promise(function(resolve, reject){
-
-            chrome.storage.local.get(['api_key'], function(result) {
-
-                if( ! result.hasOwnProperty('api_key') ){
-                    reject(false);
-                }
-
-                $.getJSON('https://telegram.ahmetimamoglu.com.tr/check', {api_token: result.api_key}, function(response){
-
-                    if(response.status === true){
-
-                        priceTracker.getStorageLocal('api_key').then(function (result) {
-                            $('.pt-api-key').val(result);
-                        });
-
-                        priceTracker.getStorageLocal('interval').then(function (result) {
-                            $('.pt-interval').val(result);
-                        });
-
-                        priceTracker.getStorageLocal('type').then(function (result) {
-                            $('.pt-type').val(result);
-                        });
-
-                        priceTracker.getStorageLocal('except_discount_percent').then(function (result) {
-                            $('.pt-except-discount-percent').val(result).trigger('change');
-                        });
-
-                        setTimeout(resolve(true), 200);
-
-                    }else{
-
-                        reject(false);
-
-                    }
-
-                });
-
+                resolve(true);
             });
 
         });
@@ -307,11 +269,9 @@ const priceTracker = {
     removeStorageLocal: function(itemKey)
     {
         return new Promise(function(resolve, reject){
-
             chrome.storage.local.remove([itemKey], function() {
                 resolve(true);
             });
-
         });
     },
 
@@ -322,23 +282,11 @@ const priceTracker = {
             let submitButton = $(this);
             submitButton.prop('disabled', true);
 
-            let apiKey = $('.pt-api-key').val() + '';
             let interval = parseInt($('.pt-interval').val());
             let ptType = parseInt($('.pt-type').val()) || 0;
             let exceptDiscountPercent = parseFloat($('.pt-except-discount-percent').autoNumeric('get')) || 0.0;
 
-
-            if( apiKey.length !== 32 ){
-
-                submitButton.prop('disabled', false);
-
-                return Swal.fire({
-                    text: 'Lütfen API anatharınızı giriniz.',
-                    type: 'error',
-                    confirmButtonText: 'Tamam'
-                });
-
-            }else if( interval < 3 || interval > 10 ){
+            if( interval < 3 || interval > 10 ){
 
                 submitButton.prop('disabled', false);
 
@@ -369,43 +317,25 @@ const priceTracker = {
                 });
             }
 
+            priceTracker.setStorageLocal('interval', interval);
+            priceTracker.setStorageLocal('except_discount_percent', exceptDiscountPercent);
+            priceTracker.setStorageLocal('type', ptType);
 
-            $.getJSON('https://telegram.ahmetimamoglu.com.tr/check', {api_token: apiKey}, function(response){
+            submitButton.prop('disabled', false);
 
-                if(response.status === true){
-                    priceTracker.setStorageLocal('api_key', apiKey);
-                    priceTracker.setStorageLocal('interval', interval);
-                    priceTracker.setStorageLocal('except_discount_percent', exceptDiscountPercent);
-                    priceTracker.setStorageLocal('type', ptType);
-
-                    submitButton.prop('disabled', false);
-
-                    Swal.fire({
-                        text: 'İşlem başarılı.',
-                        type: 'success',
-                        confirmButtonText: 'Tamam'
-                    }).then(function () {
-                        return location.reload(true);
-                    });
-
-                }else{
-
-                    submitButton.prop('disabled', false);
-
-                    return Swal.fire({
-                        text: 'API anatharınız geçersiz.',
-                        type: 'error',
-                        confirmButtonText: 'Tamam'
-                    });
-                }
-
+            Swal.fire({
+                text: 'İşlem başarılı.',
+                type: 'success',
+                confirmButtonText: 'Tamam'
+            }).then(function () {
+                return location.reload(true);
             });
 
         });
     },
 
-    remainingCounter: function () {
-
+    remainingCounter: function ()
+    {
         setInterval(function () {
 
             let remainingCounter = $('#remainingCounter');
@@ -416,41 +346,57 @@ const priceTracker = {
 
             }else {
                 // Reset
+
                 priceTracker.getStorageLocal('interval').then(function (interval) {
+
+                    let eachInterval = 0;
 
                     if (!interval) {
                         eachInterval = (3 * 60);
 
                     } else if (interval >= 3 && interval <= 10) {
-
                         eachInterval = interval * 60;
 
                     } else {
                         eachInterval = 3 * 60;
                     }
 
-                    remainingCounter.text(eachInterval - 1);
+                    remainingCounter.text(eachInterval);
+
+                    // Replay
+                    setTimeout(function () {
+                        priceTrackerAmazon.eachItems();
+                    }, 1000);
 
                 });
             }
         }, 1000);
     },
 
-    discountPercent: function (oldPrice, newPrice) {
-
+    discountPercent: function (oldPrice, newPrice)
+    {
         oldPrice = parseFloat(oldPrice) || 0;
         newPrice = parseFloat(newPrice) || 0;
 
         if( oldPrice > newPrice && newPrice > 0 ){
-
-            precent = ((oldPrice - newPrice) / oldPrice) * 100;
-
+            let precent = ((oldPrice - newPrice) / oldPrice) * 100;
             return parseFloat(precent.toFixed(2));
-
         }
-
         return 0;
+    },
 
+    playSound: function ()
+    {
+        let audio = new Audio(chrome.runtime.getURL('alert.mp3'));
+        audio.play();
+    },
+
+    listenHashChange: function ()
+    {
+        $(window).on('hashchange', function(e) {
+            $('#price-tracker tr').css({backgroundColor: "white"});
+            $('tr'+location.hash).css({backgroundColor: "springgreen"});
+        });
     }
 
 };

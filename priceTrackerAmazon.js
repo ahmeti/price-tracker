@@ -14,127 +14,43 @@ const priceTrackerAmazon = {
                 priceTracker.submitSettings();
                 priceTrackerAmazon.submitItem();
                 priceTrackerAmazon.clickDeleteItem();
+                priceTrackerAmazon.setProductTable();
 
-                // $.notify('Eklenti çalışıyor...', {type: 'success'});
+                priceTracker.getStorageLocal('amazon_items').then(function (items) {
 
-                // TEST TEST TEST TEST TEST TEST
-                /*priceTracker.getStorageLocal('amazon_items').then(function(currItems){
+                    if( ! Array.isArray(items) ){
+                        // Hiç ürün yok!
+                        return false;
+                    }
 
-                    let updatedItems = _.filter(currItems, function(currItem) {
+                    // First Inıt Table
+                    $.each(items, function(index, item) {
 
-                        if(currItem.code === 'B07RP2KRM9'){
+                        let rowNr = $('#price-tracker tr').length;
+                        let lastUpdate = moment(item.last_update, 'YYYY-MM-DD HH:mm:ss').format('DD.MM.YYYY / HH:mm:ss');
+                        let oldPrice = priceTracker.numberFormat(item.old_price, 2, ',', '.') + ' TL';
+                        let newPrice = priceTracker.numberFormat(item.new_price, 2, ',', '.') + ' TL';
+                        let lastUpdateHuman = moment(item.last_update, 'YYYY-MM-DD HH:mm:ss').fromNow();
 
-                            currItem.old_price = 2200;
-                            currItem.new_price = 2200;
-                            currItem.last_update = moment().format('YYYY-MM-DD HH:mm:ss');
+                        let newTr = `
+                        <tr id="${ item.code }">
+                            <td class="pt-delete"><a class="pt-delete-item" href="javascript:void(0)">Sil</a></td>
+                            <td class="pt-index">${ rowNr }</td>
+                            <td class="pt-code">${ item.code }</td>
+                            <td class="pt-title"><a target="_blank" href="${ item.url }">${ item.name }</a></td>
+                            <td class="pt-price">${ oldPrice }</td>
+                            <td class="pt-waiting-price">${ newPrice }</td>
+                            <td class="pt-last-update">${ lastUpdate }</td>
+                            <td class="pt-last-update-human">${ lastUpdateHuman }</td>
+                        </tr>
+                        `;
 
-                            return currItem;
-
-                        }else{
-                            return currItem;
-                        }
-
-                    });
-
-                    priceTracker.setStorageLocal('amazon_items', updatedItems).then(function () {
-
-                        // Storage Local Updated
-
-                    });
-
-                });*/
-                // TEST TEST TEST TEST TEST TEST
-
-
-                priceTracker.checkApiKey().then(function () {
-
-                    priceTrackerAmazon.setProductTable();
-
-                    // priceTracker.removeStorageLocal('amazon_items');
-
-                    priceTracker.getStorageLocal('amazon_items').then(function (items) {
-
-                        // console.log(items);
-
-                        if( ! Array.isArray(items) ){
-                            // Hiç ürün yok!
-                            return false;
-                        }
-
-                        // First Inıt Table
-                        $.each(items, function(index, item) {
-
-                            let rowNr = $('#price-tracker tr').length;
-                            let lastUpdate = moment(item.last_update, 'YYYY-MM-DD HH:mm:ss').format('DD.MM.YYYY / HH:mm:ss');
-                            let oldPrice = priceTracker.numberFormat(item.old_price, 2, ',', '.') + ' TL';
-                            let newPrice = priceTracker.numberFormat(item.new_price, 2, ',', '.') + ' TL';
-                            let lastUpdateHuman = moment(item.last_update, 'YYYY-MM-DD HH:mm:ss').fromNow();
-
-                            let newTr = `
-                            <tr id="${ item.code }">
-                                <td class="pt-delete"><a class="pt-delete-item" href="javascript:void(0)">Sil</a></td>
-                                <td class="pt-index">${ rowNr }</td>
-                                <td class="pt-code">${ item.code }</td>
-                                <td class="pt-title"><a target="_blank" href="${ item.url }">${ item.name }</a></td>
-                                <td class="pt-price">${ oldPrice }</td>
-                                <td class="pt-waiting-price">${ newPrice }</td>
-                                <td class="pt-last-update">${ lastUpdate }</td>
-                                <td class="pt-last-update-human">${ lastUpdateHuman }</td>
-                            </tr>
-                            `;
-
-                            $('#price-tracker tr:last').after(newTr);
-
-                        });
-
-                        setTimeout(function () {
-
-                            priceTracker.remainingCounter();
-
-                            priceTracker.getStorageLocal('interval').then(function (interval) {
-
-                                if( ! interval ){
-
-                                    eachInterval = (3 * 60) * 1000;
-
-                                } else if( interval >= 3 && interval <= 10 ){
-
-                                    eachInterval = (interval * 60) * 1000 ;
-
-                                }else{
-                                    eachInterval = (3 * 60) * 1000;
-                                }
-
-                                // TEST
-                                // eachInterval = (0.2 * 60) * 1000;
-
-                                // console.log('SET INTERVAL: ' + ((eachInterval / 60) / 1000) + ' sn');
-
-                                setInterval(function () {
-
-                                    // console.log('SET INTERVAL ÇALIŞTI...' + moment().format('DD.MM.YYYY / HH:mm:ss'));
-
-                                    priceTrackerAmazon.eachItems();
-
-                                }, eachInterval);
-
-                            });
-
-                        }, 3000);
+                        $('#price-tracker tr:last').after(newTr);
 
                     });
 
-                }, function () {
-
-                    // Api Key Fail
-                    return Swal.fire({
-                        title: 'API Anahtarı Geçersiz!',
-                        text: 'Lütfen API anatharınızı kontrol ediniz.',
-                        type: 'error',
-                        confirmButtonText: 'Tamam'
-                    });
+                    priceTracker.remainingCounter();
                 });
-
             });
         });
     },
@@ -413,8 +329,6 @@ const priceTrackerAmazon = {
 
             $.each(items, function(index, item) {
 
-                // return console.log(item);
-
                 $('#' + item.code).css("background-color", "yellow");
 
                 priceTrackerAmazon.getProduct(item.code).then(function (productData){
@@ -427,10 +341,6 @@ const priceTrackerAmazon = {
                         let lastUpdate = moment(productData.lastUpdate, 'YYYY-MM-DD HH:mm:ss').format('DD.MM.YYYY / HH:mm:ss');
                         let lastUpdateHuman = moment(productData.lastUpdate, 'YYYY-MM-DD HH:mm:ss').fromNow();
                         let lastPriceFormat = priceTracker.numberFormat(productData.priceFloat, 2, ',', '.') + ' TL';
-
-                        // console.log(item);
-                        // console.log(productData);
-                        // console.log(lastUpdateHuman);
 
                         let itemCodeSelector = $('#' + item.code);
                         itemCodeSelector.css('background-color', 'white');
@@ -446,16 +356,19 @@ const priceTrackerAmazon = {
                         let exceptDiscountPercent;
                         let ptType;
 
+                        //  Test
+                        // newPrice = Math.floor(Math.random() * (60 - 40 + 1) + 40);
+
                         if( oldPrice === newPrice ){
                             // Fiyat Değişmemiş !
-                            console.warn('Fiyat değişmemiş');
+                            console.log('Fiyat değişmemiş... OLD: ' + oldPrice + ' NEW:' + newPrice);
                             return false;
                         }
 
                         // Fiyat Değişti !
-                        console.log('Fiyat değişti...');
-                        console.log(item.new_price);
-                        console.log(productData.priceFloat);
+                        console.log('Fiyat değişti... OLD: ' + oldPrice + ' NEW:' + newPrice);
+                        // console.log(item.new_price);
+                        // console.log(productData.priceFloat);
 
 
                         // Paste
@@ -527,12 +440,8 @@ const priceTrackerAmazon = {
 
                 });
 
-
-
             });
-
         });
-
     },
 
     processChanges: function (productCode, newPrice, lastPriceFormat, itemCodeSelector)
@@ -542,7 +451,7 @@ const priceTrackerAmazon = {
 
             let updatedItems = _.filter(currItems, function(currItem) {
 
-                if(currItem.code === productCode){
+                if( currItem.code === productCode ){
 
                     currItem.old_price = newPrice;
                     currItem.new_price = newPrice;
@@ -557,10 +466,8 @@ const priceTrackerAmazon = {
             });
 
             priceTracker.setStorageLocal('amazon_items', updatedItems).then(function () {
-
                 // Storage Local Updated
                 itemCodeSelector.find('.pt-price').text(lastPriceFormat);
-
             });
 
         });
@@ -572,7 +479,7 @@ const priceTrackerAmazon = {
         priceTracker.sendMessage(trackerId, productCode, productName, oldPrice, newPrice).then(function (success) {
 
             // İşlem başarılı. Telegram mesajı gönderildi.
-            console.log('İşlem başarılı. Telegram mesajı gönderildi.');
+            console.log('İşlem başarılı. Mesajı gönderildi.');
 
             // Storage Local Update
             priceTrackerAmazon.processChanges(productCode, newPrice, lastPriceFormat, itemCodeSelector)
@@ -580,14 +487,12 @@ const priceTrackerAmazon = {
         }, function (error) {
 
             // İşlem başarısız. Telegram mesajı gönderilemedi.
-            console.log('İşlem başarısız. Telegram mesajı gönderilemedi.');
+            console.log('İşlem başarısız. Mesajı gönderilemedi.');
         });
     }
 
 };
 
 $(document).ready(function () {
-
     priceTrackerAmazon.start();
-
 });
